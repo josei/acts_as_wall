@@ -1,0 +1,172 @@
+= ActsAsWall
+
+Plugin that allows implementing Facebook/Twitter style walls, where events from multiple walls are aggregated. Requires Rails 3.
+
+= Models
+
+Suppose an application where users have walls you can post on. There are also groups the users can join,
+and they also have an associated wall. While a user belongs to a group, he will be subscribed to the events
+of that wall. The implementation using acts_as_wall is as follows:
+
+  class Group < ActiveRecord::Base
+    acts_as_wall  # This model has an associated wall
+    acts_as_event # This model will appear in events (e.g. a group was created by Bob)
+  end
+
+  class User < ActiveRecord::Base
+    acts_as_wall
+    acts_as_listener # Users listen to walls
+  end
+
+  class Membership < ActiveRecord::Base
+    belongs_to :user
+    belongs_to :group
+
+    # We want that a user listens to a group's wall whenever the user belongs to the group.
+    keeps_listener :user=>:group
+  end
+
+  class Friendship < ActiveRecord::Base
+    belongs_to :user
+    belongs_to :user_target, :class_name => 'User'
+
+    # A user listens to another user's wall if they're friends.
+    keeps_listener :user=>:user_target
+  end
+
+To get all the events from walls that a user is subscribed to (usually employed in a home page):
+
+  user.feed # Returns events from subscribed walls
+
+To get all the events from a wall:
+
+  group.wall.events
+
+Also, in some cases you will want that a user is subscribed to its own wall. Remember to create a self-listener for that purpose:
+
+  class User < ActiveRecord::Base
+    acts_as_wall
+    acts_as_listener
+    after_create :add_self_listener
+    
+    protected
+    def add_self_listener
+      listen_to self.wall
+    end
+  end
+
+This is done automatically by using:
+
+  acts_as_listener :self => true
+
+= Controllers
+
+There is a simple way to fire events. First, you need to add WallResponder to your controller responders.
+An easy way to achieve this using the responders gem is:
+
+  class ApplicationController < ActionController::Base
+    responders :wall
+  end
+
+Then, for each controller, you can use the announce method to declare that an event must be logged and announced in a wall.
+It is important to note that you need to use respond_with(@resource) for everything to work:
+
+  class GroupsController < ActionController::Base
+    announce :current_user, :user, :except=>:destroy
+  end
+
+This will access controller.current_user and @group.user to get the walls to add the event to. It will
+process any non-get action and announce the event in these walls.
+
+You can call announce more than once in case there's not a single rule that suits all your cases:
+
+  class GroupsController < ActionController::Base
+    announce :current_user
+    announce :group, :except=>:update
+  end
+
+Also, procs are supported, and other conditions can be used:
+
+    announce :current_user, :if=>lambda{ |post, controller| controller.current_user.friend_of?(post.user) }, :except=>:destroy
+
+Finally, what if you don't want a different object to be included into the event? Sometimes you don't want
+to include a highly volatile object which is likely to be destroyed, as you would lose its associated event.
+This happens often with nested resources, or with resources that represent relationships.
+To solve those cases, you can specify the object that will be stored in the event:
+
+  class Membership < ActiveRecord::Base
+    belongs_to :group
+    belongs_to :user
+
+    # Don't include the membership object, but the group the user belongs to
+    acts_as_event :object=>:group
+  end
+
+Events can be tested by using test helper methods assert_event, assert_no_event, assert_listener and assert_no_listener.
+
+= Notifications
+
+You may usually want to notify users instead of posting to their walls. This can be specified at the model:
+
+  class User < ActiveRecourd::Base
+    acts_as_listener :mailer => true
+  end
+
+This will make the responder call automatically UserMailer.groups_update(user, event), UserMailer.memberships_create(user, event), etc.
+
+To notify users instead of announcing events on their walls, use notify method instead of announce:
+
+  class PostsController < ActionController::Base
+    notify :author, :only=>:destroy
+  end
+
+To get your notifications:
+
+  current_user.events
+
+= Other controllers
+
+You can fire events from other controllers, while keeping the settings from the original controllers:
+
+  class GroupsController < ActionController::Base
+    notify :author, :only=>:destroy
+    def destroy
+      @group = Group.find params[:id]
+
+      posts = @group.posts
+      @group.destroy
+      fire_event posts, :destroy, :posts
+
+      respond_with @group
+    end
+  end
+
+= If defaults don't suit you
+
+You can always use fire_event method if you don't want to use responders:
+
+  class GroupsController < ActionController::Base
+    notify :members, :only=>:update
+    
+    def update
+      @group = Group.find params[:id]
+      @group.update_attributes(params[:group])
+      fire_event @group # equivalent to fire_event @group, :update, :groups
+      ...
+    end
+
+If none these methods don't suit you, you can still manage listeners and events manually in those problematic cases.
+
+For example, you can create listeners:
+
+  Listener.create :user=>current_user, :wall=>group.wall
+  # or
+  current_user.listen_to group.wall
+
+Or you can create events:
+
+  Event.create :object=>group, :controller=>'groups', :action=>'create', :actor=>current_user
+
+And so on. Enjoy the plugin :)
+
+Copyright (c) 2010 José Ignacio Fernández (joseignacio.fernandez at gmail.com), released under the MIT license
