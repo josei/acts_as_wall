@@ -12,9 +12,10 @@ module ActiveRecord #:nodoc:
             belongs_to :object, :polymorphic=>true
             belongs_to :subobject, :polymorphic=>true
 
-            default_scope order('events.created_at desc')
+            default_scope order('events.start_at desc')
             scope :public, where(:'events.public' => true)
-            scope :notified, where(:'announcements.notification' => true)
+            scope :next, lambda { where('events.start_at > ?', DateTime.now) }
+            scope :past, lambda { where('events.start_at < ?', DateTime.now) }
           end
         end
       end

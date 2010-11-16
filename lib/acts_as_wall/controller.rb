@@ -30,7 +30,7 @@ module ActiveRecord # :nodoc:
               next if options[:except] and options[:except].include?(action.to_sym)
               next if options[:only]   and !options[:only].include?(action.to_sym)
               next if options[:unless] and options[:unless].call(resource, self)
-              next if options[:if]     and options[:if].call(resource, self)
+              next if options[:if]     and !options[:if].call(resource, self)
 
               # Process options
               wallables = if options[:wallables].is_a? Proc
@@ -49,7 +49,8 @@ module ActiveRecord # :nodoc:
               event ||= ::Event.create :actor=>current_user, :public=>false,
                                        :object=>object.event_object, :text=>object.event_text,
                                        :subobject=>object.event_subobject, :subtext=>object.event_subtext,
-                                       :controller=>controller.to_s, :action=>action.to_s
+                                       :controller=>controller.to_s, :action=>action.to_s,
+                                       :start_at=>DateTime.now
 
               # Create announcements and notifications
               wallables.each do |wallable|
@@ -65,8 +66,8 @@ module ActiveRecord # :nodoc:
                   # Create announcement
                   event.announcements.create :wall=>wallable.wall
 
-                  # Mark event as published if announced on a wall
-                  published = true unless wallable.wall.private
+                  # Mark event as published if announced on a public wall
+                  published = true unless wallable.wall.private?
                 end
 
               end

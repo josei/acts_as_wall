@@ -6,6 +6,8 @@ module ActiveRecord #:nodoc:
           base.class_eval do
             belongs_to :event
             belongs_to :notifee, :polymorphic => true
+
+            default_scope order('notifications.created_at desc')
           end
         end
       end

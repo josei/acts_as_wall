@@ -165,7 +165,7 @@ For example, you can create listeners:
 
 Or you can create events:
 
-  Event.create :object=>group, :controller=>'groups', :action=>'create', :actor=>current_user
+  Event.create :object=>group, :controller=>'groups', :action=>'create', :actor=>current_user, :start_at=>DateTime.now
 
 And so on. Enjoy the plugin :)
 

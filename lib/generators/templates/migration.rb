@@ -15,6 +15,7 @@ class CreateActsAsWallMigration < ActiveRecord::Migration
       t.belongs_to :object, :polymorphic=>true
       t.belongs_to :subobject, :polymorphic=>true
       t.boolean :public, :default=>false
+      t.datetime :start_at
       t.timestamps
     end
 

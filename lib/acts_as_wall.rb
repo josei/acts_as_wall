@@ -16,14 +16,14 @@ module ActiveRecord #:nodoc:
           EOS
 
           has_one :wall, :as=>:wallable, :dependent=>:destroy
-          after_create :create_wall
+          before_create :create_wall
         end
       end
 
       module InstanceMethods
         protected
         def create_wall
-          Wall.create :wallable=>self, :private=>wall_private
+          self.wall = Wall.new :wallable=>self, :private=>wall_private
         end
       end
     end
