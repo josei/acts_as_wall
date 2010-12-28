@@ -9,8 +9,7 @@ class CreateActsAsWallMigration < ActiveRecord::Migration
     create_table :events do |t|
       t.string :controller
       t.string :action
-      t.string :text
-      t.string :subtext
+      t.string :creator_type
       t.belongs_to :actor, :polymorphic=>true
       t.belongs_to :object, :polymorphic=>true
       t.belongs_to :subobject, :polymorphic=>true

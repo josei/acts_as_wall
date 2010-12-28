@@ -7,8 +7,11 @@ require 'acts_as_wall/controller'
 require 'acts_as_wall/wall'
 require 'acts_as_wall/listener'
 require 'acts_as_wall/event'
+require 'acts_as_wall/event_group'
 require 'acts_as_wall/announcement'
 require 'acts_as_wall/notification'
+require 'acts_as_wall/arrangeable'
+
 require 'acts_as_wall/test_helper'
 
 require 'responders/wall_responder'

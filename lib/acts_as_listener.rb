@@ -27,7 +27,7 @@ module ActiveRecord #:nodoc:
         def listen_to wall
           listeners.create :wall=>wall
         end
-        
+                
         def feed
           ::Event.includes(:announcements=>{:wall=>:listeners}).
             where(:'listeners.actor_id'=>self.id, :'listeners.actor_type'=>self.class.name)

@@ -43,14 +43,13 @@ module ActiveRecord # :nodoc:
                     self.send(name)
                   end
                 end
-              end.flatten
+              end.flatten.uniq
 
               # Create event (only one)
               event ||= ::Event.create :actor=>current_user, :public=>false,
-                                       :object=>object.event_object, :text=>object.event_text,
-                                       :subobject=>object.event_subobject, :subtext=>object.event_subtext,
+                                       :object=>object.event_object, :subobject=>object.event_subobject,
                                        :controller=>controller.to_s, :action=>action.to_s,
-                                       :start_at=>DateTime.now
+                                       :start_at=>DateTime.now, :creator_type=>object.class.name
 
               # Create announcements and notifications
               wallables.each do |wallable|

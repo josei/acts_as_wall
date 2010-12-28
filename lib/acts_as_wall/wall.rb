@@ -15,6 +15,10 @@ module ActiveRecord #:nodoc:
         def listened_by? actor
           !actor.nil? and actor.listeners.where(:wall_id=>id).first
         end
+
+        def showable_by? actor
+          !private? or listened_by?(actor)
+        end
       end
     end
   end

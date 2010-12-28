@@ -104,6 +104,33 @@ To solve those cases, you can specify the object that will be stored in the even
 
 Events can be tested by using test helper methods assert_event, assert_no_event, assert_listener and assert_no_listener.
 
+= Grouping events
+
+When rendering events, most times you want a timeline with some events grouped. You'd rather show this:
+
+  Alice and Bob commented the post "Ruby on Rails"
+
+instead of
+
+  Alice commented the post "Ruby on Rails"
+  Bob commented the post "Ruby on Rails"
+
+How to do this? The plugin makes it easy to group events using the :group_by argument when calling acts_as_event:
+
+  class Comment
+    acts_as_event :subobject=>:commentable, :group_by=>:commentable
+  end
+  
+This will group all events in which the commentable field is the same. In order for the events to be grouped, it is important to store the commentable field, so it is stored into the event's subobject field thanks to :subobject => :commentable.
+
+When querying for the events, just use the arrange scope to get a list of grouped events:
+
+  @user.feed.past.arrange
+  
+It works well with will_paginate plugin:
+
+  @user.feed.past.paginate(:page=>params[:page], :per_page=>20).arrange
+
 = Notifications
 
 You may usually want to notify users instead of posting to their walls. This can be specified at the model:
