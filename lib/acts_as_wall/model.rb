@@ -25,10 +25,10 @@ module ActiveRecord #:nodoc:
             keeps_listener_options.each do |actor_label, wall_label|
               actor = send(actor_label)
               wall = (wall_label == :self ? self : send(wall_label)).wall
-              listener = listeners_kept.select { |l| l.actor_type==actor.class.name }.first
+              listener = listeners_kept.select { |l| l.feed.actor_type==actor.class.name }.first
 
               if listener_needed_for?(actor, wall)
-                listeners_kept.create :wall=>wall, :actor=>actor unless listener
+                listeners_kept.create :wall=>wall, :feed=>actor.feed unless listener
               else
                 listener.destroy if listener
               end

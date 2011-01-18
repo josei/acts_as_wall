@@ -5,7 +5,7 @@ module ActiveRecord #:nodoc:
         def self.included(base)
           base.class_eval do
             belongs_to :event
-            belongs_to :notifee, :polymorphic => true
+            belongs_to :tray
 
             default_scope order('notifications.created_at desc')
           end

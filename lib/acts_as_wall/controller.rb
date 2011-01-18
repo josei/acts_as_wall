@@ -54,12 +54,14 @@ module ActiveRecord # :nodoc:
               # Create announcements and notifications
               wallables.each do |wallable|
                 if options[:notification]
-                  # Create notification
-                  event.notifications.create :notifee=>wallable
-
-                  # Send mail if a mailer is defined
-                  if mailer = ActiveRecord::Acts::Listener.mailers[wallable.class.name]
-                    Kernel.const_get(mailer).send("#{controller}_#{action}".to_sym, wallable, event).deliver
+                  if wallable
+                    # Create notification
+                    event.notifications.create :tray=>wallable.tray
+                    
+                    # Send mail if a mailer is defined
+                    if mailer = ActiveRecord::Acts::Listener.mailers[wallable.class.name]
+                      Kernel.const_get(mailer).send("#{controller}_#{action}".to_sym, wallable, event).deliver
+                    end
                   end
                 else
                   # Create announcement

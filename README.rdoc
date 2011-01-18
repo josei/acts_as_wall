@@ -36,11 +36,12 @@ of that wall. The implementation using acts_as_wall is as follows:
 
 To get all the events from walls that a user is subscribed to (usually employed in a home page):
 
-  user.feed # Returns events from subscribed walls
+  user.feed.events # Returns events from the walls a user is subscribed
 
 To get all the events from a wall:
 
-  group.wall.events
+  group.wall.events # Returns events from a group's wall
+  user.wall.events  # Returns events from a user's wall
 
 Also, in some cases you will want that a user is subscribed to its own wall. Remember to create a self-listener for that purpose:
 
@@ -149,7 +150,7 @@ To notify users instead of announcing events on their walls, use notify method i
 
 To get your notifications:
 
-  current_user.events
+  current_user.tray.events
 
 = Other controllers
 
@@ -182,7 +183,7 @@ You can always use fire_event method if you don't want to use responders:
       ...
     end
 
-If none these methods don't suit you, you can still manage listeners and events manually in those problematic cases.
+If none of these methods suit you, you can still manage listeners and events manually in those problematic cases.
 
 For example, you can create listeners:
 

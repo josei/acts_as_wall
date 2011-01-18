@@ -13,7 +13,7 @@ module ActiveRecord #:nodoc:
         end
 
         def listened_by? actor
-          !actor.nil? and actor.listeners.where(:wall_id=>id).first
+          !actor.nil? and !actor.feed.listeners.where(:wall_id=>id).empty?
         end
 
         def showable_by? actor

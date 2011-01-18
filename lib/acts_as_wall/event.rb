@@ -12,11 +12,13 @@ module ActiveRecord #:nodoc:
             belongs_to :actor, :polymorphic=>true
             belongs_to :object, :polymorphic=>true
             belongs_to :subobject, :polymorphic=>true
+            
+            after_update  :touch_acts_as_event
+            after_destroy :touch_acts_as_event
 
-            default_scope order('events.start_at desc')
             scope :public, where(:'events.public' => true)
-            scope :next, lambda { where('events.start_at > ?', DateTime.now) }
-            scope :past, lambda { where('events.start_at < ?', DateTime.now) }
+            scope :next, lambda { where('events.start_at > ?', DateTime.now).order('events.start_at asc') }
+            scope :past, lambda { where('events.start_at < ?', DateTime.now).order('events.start_at desc') }
           end
         end
       
@@ -51,6 +53,27 @@ module ActiveRecord #:nodoc:
             super
           end
         end
+
+        protected
+          def touch_acts_as_event
+            c = ActiveRecord::Base.connection
+            
+            # Touch walls
+            c.update """UPDATE walls SET updated_at='#{DateTime.now.to_formatted_s(:db)}'
+                        FROM announcements
+                        WHERE announcements.event_id='#{self.id}' AND announcements.wall_id=walls.id"""
+            
+            # Touch feeds
+            c.update """UPDATE feeds SET updated_at='#{DateTime.now.to_formatted_s(:db)}'
+                        FROM announcements, walls, listeners
+                        WHERE announcements.event_id='#{self.id}' AND announcements.wall_id=walls.id AND
+                              walls.id=listeners.wall_id AND listeners.feed_id=feeds.id"""
+
+            # Touch trays
+            c.update """UPDATE trays SET updated_at='#{DateTime.now.to_formatted_s(:db)}'
+                        FROM notifications
+                        WHERE notifications.event_id='#{self.id}' AND notifications.tray_id=trays.id"""
+          end
         
       end
     end
